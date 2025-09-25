@@ -2,17 +2,12 @@
 title WatchDAWG - GPU Temperature Monitor
 color 0B
 echo.
-echo  ██╗    ██╗ █████╗ ████████╗ ██████╗██╗  ██╗██████╗  █████╗ ██╗    ██╗ ██████╗ 
-echo  ██║    ██║██╔══██╗╚══██╔══╝██╔════╝██║  ██║██╔══██╗██╔══██╗██║    ██║██╔════╝ 
-echo  ██║ █╗ ██║███████║   ██║   ██║     ███████║██║  ██║███████║██║ █╗ ██║██║  ███╗
-echo  ██║███╗██║██╔══██║   ██║   ██║     ██╔══██║██║  ██║██╔══██║██║███╗██║██║   ██║
-echo  ╚███╔███╔╝██║  ██║   ██║   ╚██████╗██║  ██║██████╔╝██║  ██║╚███╔███╔╝╚██████╔╝
-echo   ╚══╝╚══╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝ ╚══╝╚══╝  ╚═════╝ 
+echo =========================================================================
+echo                            WATCHDAWG
+echo                    GPU Temperature Watchdog for Crypto Mining
+echo                        Protects your GPU from overheating!
+echo =========================================================================
 echo.
-echo                      GPU Temperature Watchdog for Crypto Mining
-echo                              Protects your GPU from overheating!
-echo.
-echo ================================================================================
 
 REM Change to the script directory
 cd /d "%~dp0"
@@ -38,7 +33,7 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-echo ✓ Virtual environment created successfully!
+echo [OK] Virtual environment created successfully!
 echo.
 
 echo [2/4] Installing required packages...
@@ -49,20 +44,20 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-echo ✓ Packages installed successfully!
+echo [OK] Packages installed successfully!
 echo.
 
 echo [3/4] Creating default configuration...
 ".venv\Scripts\python.exe" gpu_watchdog.py --create-config
-echo ✓ Configuration file created!
+echo [OK] Configuration file created!
 echo.
 
 echo [4/4] Testing GPU temperature reading...
 ".venv\Scripts\python.exe" gpu_watchdog.py --dry-run
 echo.
 
-echo ================================================================================
-echo ✓ SETUP COMPLETE!
+echo =========================================================================
+echo [OK] SETUP COMPLETE!
 echo.
 echo Your WatchDAWG is now ready to protect your GPU!
 echo Configuration file: gpu_watchdog_config.json
@@ -72,15 +67,10 @@ pause
 :MAIN_MENU
 cls
 echo.
-echo  ██╗    ██╗ █████╗ ████████╗ ██████╗██╗  ██╗██████╗  █████╗ ██╗    ██╗ ██████╗ 
-echo  ██║    ██║██╔══██╗╚══██╔══╝██╔════╝██║  ██║██╔══██╗██╔══██╗██║    ██║██╔════╝ 
-echo  ██║ █╗ ██║███████║   ██║   ██║     ███████║██║  ██║███████║██║ █╗ ██║██║  ███╗
-echo  ██║███╗██║██╔══██║   ██║   ██║     ██╔══██║██║  ██║██╔══██║██║███╗██║██║   ██║
-echo  ╚███╔███╔╝██║  ██║   ██║   ╚██████╗██║  ██║██████╔╝██║  ██║╚███╔███╔╝╚██████╔╝
-echo   ╚══╝╚══╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝ ╚══╝╚══╝  ╚═════╝ 
-echo.
+echo =========================================================================
+echo                            WATCHDAWG
 echo                              MAIN MENU
-echo ================================================================================
+echo =========================================================================
 
 REM Show current status
 echo [CURRENT STATUS]
@@ -95,7 +85,7 @@ for /f "tokens=2 delims=:" %%a in ('findstr "temp_threshold" gpu_watchdog_config
 for /f "tokens=2 delims=:" %%a in ('findstr "grace_period" gpu_watchdog_config.json') do (
     set grace_setting=%%a
 )
-echo Temperature Threshold: %temp_setting%°C
+echo Temperature Threshold: %temp_setting%C
 echo Grace Period: %grace_setting% seconds
 echo.
 
@@ -126,21 +116,21 @@ goto MAIN_MENU
 :START_WATCHDOG
 cls
 echo.
-echo ================================================================================
+echo =========================================================================
 echo                              STARTING WATCHDOG
-echo ================================================================================
+echo =========================================================================
 echo.
-echo ⚠️  IMPORTANT INSTRUCTIONS:
+echo [!] IMPORTANT INSTRUCTIONS:
 echo.
 echo 1. Make sure your T-Rex mining software is already running
 echo 2. WatchDAWG will monitor GPU temperature every 10 seconds  
 echo 3. If temperature exceeds the threshold, it will:
-echo    • Send graceful shutdown signal to T-Rex
-echo    • Wait 15 seconds for T-Rex to close properly
-echo    • Force close if T-Rex doesn't respond
+echo    - Send graceful shutdown signal to T-Rex
+echo    - Wait 15 seconds for T-Rex to close properly
+echo    - Force close if T-Rex doesn't respond
 echo 4. Press Ctrl+C to stop the watchdog
 echo.
-echo ================================================================================
+echo =========================================================================
 echo Starting WatchDAWG in 5 seconds...
 timeout /t 5 >nul
 echo.
@@ -154,12 +144,12 @@ goto MAIN_MENU
 :TEST_MODE
 cls
 echo.
-echo ================================================================================
+echo =========================================================================
 echo                                 TEST MODE
-echo ================================================================================
+echo =========================================================================
 echo.
 echo This will show you what WatchDAWG would do without actually killing processes.
-echo Setting threshold to 50°C to trigger the test...
+echo Setting threshold to 50C to trigger the test...
 echo.
 pause
 
@@ -171,9 +161,9 @@ goto MAIN_MENU
 :CHECK_TEMP
 cls
 echo.
-echo ================================================================================
+echo =========================================================================
 echo                           CURRENT GPU STATUS
-echo ================================================================================
+echo =========================================================================
 echo.
 
 ".venv\Scripts\python.exe" gpu_watchdog.py --dry-run
@@ -184,28 +174,28 @@ goto MAIN_MENU
 :EDIT_THRESHOLD
 cls
 echo.
-echo ================================================================================
+echo =========================================================================
 echo                        EDIT TEMPERATURE THRESHOLD
-echo ================================================================================
+echo =========================================================================
 echo.
-echo Current temperature threshold: %temp_setting%°C
+echo Current temperature threshold: %temp_setting%C
 echo.
 echo Recommended settings:
-echo • 70°C - Very conservative (safest for GPU)
-echo • 75°C - Conservative (good for expensive GPUs)
-echo • 80°C - Moderate (balanced protection)
-echo • 85°C - Standard (most common setting)
-echo • 90°C - High (only with excellent cooling)
+echo - 70C - Very conservative (safest for GPU)
+echo - 75C - Conservative (good for expensive GPUs)
+echo - 80C - Moderate (balanced protection)
+echo - 85C - Standard (most common setting)
+echo - 90C - High (only with excellent cooling)
 echo.
 set /p new_temp="Enter new temperature threshold (70-90): "
 
 if %new_temp% LSS 60 (
-    echo Temperature too low! Minimum is 60°C.
+    echo Temperature too low! Minimum is 60C.
     pause
     goto EDIT_THRESHOLD
 )
 if %new_temp% GTR 95 (
-    echo Temperature too high! Maximum is 95°C.
+    echo Temperature too high! Maximum is 95C.
     pause
     goto EDIT_THRESHOLD
 )
@@ -214,7 +204,7 @@ REM Update the config file (simple replacement)
 powershell -Command "(Get-Content gpu_watchdog_config.json) -replace '\"temp_threshold\": [0-9.]+', '\"temp_threshold\": %new_temp%.0' | Set-Content gpu_watchdog_config.json"
 
 echo.
-echo ✓ Temperature threshold updated to %new_temp%°C
+echo [OK] Temperature threshold updated to %new_temp%C
 echo.
 pause
 goto MAIN_MENU
@@ -222,9 +212,9 @@ goto MAIN_MENU
 :VIEW_LOG
 cls
 echo.
-echo ================================================================================
+echo =========================================================================
 echo                               LOG FILE
-echo ================================================================================
+echo =========================================================================
 echo.
 
 if exist "gpu_watchdog.log" (
@@ -242,7 +232,7 @@ goto MAIN_MENU
 :EXIT
 echo.
 echo Thank you for using WatchDAWG!
-echo Your GPU will thank you too! 🐕‍🦺
+echo Your GPU will thank you too!
 echo.
 pause
 exit
