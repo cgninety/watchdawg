@@ -143,6 +143,8 @@ class GPUWatchdog:
                 
                 if os.name == 'nt':  # Windows
                     # Try to send CTRL_C_EVENT first (graceful for T-Rex)
+                    # NOTE: This only works if T-Rex is in the same console group
+                    # Will often fail with "The parameter is incorrect" error
                     try:
                         # Send CTRL_C_EVENT to the process group
                         self.logger.info(f"Sending CTRL_C_EVENT to process {proc.pid}")
@@ -159,7 +161,9 @@ class GPUWatchdog:
                             continue
                             
                     except (OSError, psutil.AccessDenied) as e:
-                        # CTRL_C_EVENT might not work, fallback to terminate
+                        # CTRL_C_EVENT failed - this is expected on Windows when T-Rex
+                        # is not in the same console group. Fallback to terminate()
+                        # which is less graceful but still safe for T-Rex
                         self.logger.warning(f"CTRL_C_EVENT failed for process {proc.pid}: {e}, using terminate()")
                         proc.terminate()
                 else:  # Unix-like

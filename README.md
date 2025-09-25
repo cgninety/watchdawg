@@ -1,4 +1,6 @@
-# WatchDAWG - GPU Temperature Watchdog for T-Rex Mining
+# Watchdawg - GPU watchdog for T-Rex Mining
+
+**Status: Work in Progress - Beta Release**
 
 Monitors GPU temperature and gracefully shuts down T-Rex mining software when the temperature exceeds a configurable threshold.
 
@@ -18,6 +20,28 @@ setup.bat          # Windows users
 ./run_watchdog.bat # Start monitoring
 ```
 
+## Current Status
+
+**Beta Release - Functional but under active development**
+
+**What works:**
+- GPU temperature monitoring via nvidia-smi
+- Process detection and termination
+- Configurable thresholds and grace periods
+- Comprehensive logging and error handling
+- User-friendly setup with start.bat
+
+**Known limitations:**
+- Windows CTRL_C shutdown may fall back to terminate() (see Troubleshooting)
+- Limited to T-Rex miner process detection patterns
+- No API-based graceful shutdown yet
+
+**Upcoming improvements:**
+- T-Rex API integration for cleaner shutdown
+- Support for additional mining software
+- Real-time temperature display
+- Email/SMS notifications
+
 ## Features
 
 - **Temperature Monitoring**: Uses `nvidia-smi` to monitor GPU temperature
@@ -35,10 +59,6 @@ setup.bat          # Windows users
 - Git (for cloning the repository)
 
 ## Installation
-
-
-
-**The easiest way for new users:**
 
 1. **Download the project:**
    - Go to https://github.com/cgninety/watchdawg
@@ -223,6 +243,24 @@ The watchdog detects T-Rex processes by:
 3. **Process not detected**: Check the `trex_process_names` configuration to ensure it matches your T-Rex executable name
 4. **Python not found**: Make sure Python 3.7+ is installed and in your system PATH
 5. **Virtual environment issues**: Delete the `.venv` folder and run `start.bat` again
+
+### Windows Shutdown Behavior (Known Issue)
+
+On Windows, you may see this warning in the logs:
+```
+CTRL_C_EVENT failed for process XXXX: [WinError 87] The parameter is incorrect, using terminate()
+```
+
+**This is expected behavior and not an error.** Here's what happens:
+
+- **First attempt**: WatchDAWG tries to send CTRL_C_EVENT (graceful shutdown signal)
+- **Windows limitation**: This only works if T-Rex is in the same console group
+- **Automatic fallback**: When CTRL_C fails, it automatically uses `terminate()` 
+- **Result**: T-Rex will still shut down, but less gracefully than with Ctrl+C
+
+**Impact**: T-Rex should recover normally when restarted, though it may show "unclean shutdown" in its logs.
+
+**Future improvement**: We're working on API-based shutdown methods for even more graceful termination.
 
 ### Logs
 
