@@ -1,6 +1,15 @@
-# GPU Temperature Watchdog for T-Rex Mining
+# WatchDAWG - GPU Temperature Watchdog for T-Rex Mining
 
 A Python program that monitors GPU temperature and gracefully shuts down T-Rex mining software when the temperature exceeds a configurable threshold.
+
+## 🚀 Quick Start
+
+```bash
+git clone https://github.com/cgninety/watchdawg.git
+cd watchdawg
+setup.bat          # Windows users
+./run_watchdog.bat # Start monitoring
+```
 
 ## Features
 
@@ -16,15 +25,57 @@ A Python program that monitors GPU temperature and gracefully shuts down T-Rex m
 - NVIDIA GPU with NVIDIA drivers installed
 - Python 3.7 or higher
 - `nvidia-smi` utility (comes with NVIDIA drivers)
+- Git (for cloning the repository)
 
 ## Installation
 
-1. Install required Python packages:
+### Method 1: Clone from GitHub (Recommended)
+
+1. **Clone the repository:**
+```bash
+git clone https://github.com/cgninety/watchdawg.git
+cd watchdawg
+```
+
+2. **Run the setup script (Windows):**
+```cmd
+setup.bat
+```
+This will automatically create a virtual environment, install dependencies, and create the default configuration.
+
+3. **Or manually install (Windows/Linux):**
+```bash
+# Create virtual environment
+python -m venv .venv
+
+# Activate virtual environment
+# Windows:
+.venv\Scripts\activate
+# Linux:
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Create default configuration
+python gpu_watchdog.py --create-config
+```
+
+### Method 2: Download Individual Files
+
+If you prefer not to use Git:
+
+1. Download the following files from https://github.com/cgninety/watchdawg:
+   - `gpu_watchdog.py`
+   - `requirements.txt` 
+   - `gpu_watchdog_config.json` (optional, will be created automatically)
+
+2. Install required Python packages:
 ```bash
 pip install -r requirements.txt
 ```
 
-2. Create default configuration file:
+3. Create default configuration file:
 ```bash
 python gpu_watchdog.py --create-config
 ```
@@ -52,6 +103,13 @@ The program uses a JSON configuration file (`gpu_watchdog_config.json`) with the
 ```
 
 ## Usage
+
+### Quick Start (Windows)
+
+After installation, simply run:
+```cmd
+run_watchdog.bat
+```
 
 ### Basic Usage
 
