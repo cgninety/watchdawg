@@ -1,0 +1,12 @@
+{
+    "temp_threshold": 85.0,
+    "check_interval": 10,
+    "grace_period": 30,
+    "trex_process_names": [
+        "t-rex.exe",
+        "trex.exe",
+        "t-rex",
+        "trex"
+    ],
+    "log_level": "INFO"
+}
