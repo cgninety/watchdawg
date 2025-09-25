@@ -11,6 +11,7 @@ import subprocess
 import logging
 import json
 import os
+import signal
 from typing import List, Optional
 from dataclasses import dataclass, field
 
@@ -138,14 +139,40 @@ class GPUWatchdog:
         
         for proc in processes:
             try:
-                self.logger.info(f"Sending termination signal to T-Rex process {proc.pid}")
+                self.logger.info(f"Sending graceful shutdown signal to T-Rex process {proc.pid}")
                 
                 if os.name == 'nt':  # Windows
-                    # On Windows, try to send a graceful termination
-                    # T-Rex should handle SIGTERM gracefully
-                    proc.terminate()
+                    # Try to send CTRL_C_EVENT first (graceful for T-Rex)
+                    try:
+                        # Send CTRL_C_EVENT to the process group
+                        self.logger.info(f"Sending CTRL_C_EVENT to process {proc.pid}")
+                        proc.send_signal(signal.CTRL_C_EVENT)
+                        
+                        # Give it a moment to start shutting down gracefully
+                        time.sleep(2)
+                        
+                        # Check if process is still running
+                        if proc.is_running():
+                            self.logger.info(f"Process {proc.pid} still running after CTRL_C, will wait for grace period")
+                        else:
+                            self.logger.info(f"Process {proc.pid} gracefully shut down via CTRL_C")
+                            continue
+                            
+                    except (OSError, psutil.AccessDenied) as e:
+                        # CTRL_C_EVENT might not work, fallback to terminate
+                        self.logger.warning(f"CTRL_C_EVENT failed for process {proc.pid}: {e}, using terminate()")
+                        proc.terminate()
                 else:  # Unix-like
-                    proc.terminate()
+                    # Send SIGINT first (equivalent to Ctrl+C)
+                    try:
+                        proc.send_signal(signal.SIGINT)
+                        time.sleep(2)
+                        if not proc.is_running():
+                            self.logger.info(f"Process {proc.pid} gracefully shut down via SIGINT")
+                            continue
+                    except:
+                        # Fallback to SIGTERM
+                        proc.terminate()
                     
                 terminated_processes.append(proc)
                 
@@ -155,9 +182,22 @@ class GPUWatchdog:
                 self.logger.error(f"Error terminating process {proc.pid}: {e}")
         
         # Wait for graceful shutdown
-        self.logger.info(f"Waiting {self.config.grace_period} seconds for graceful shutdown...")
-        
-        _, alive = psutil.wait_procs(terminated_processes, timeout=self.config.grace_period)
+        if terminated_processes:
+            self.logger.info(f"Waiting {self.config.grace_period} seconds for {len(terminated_processes)} process(es) to shut down gracefully...")
+            
+            # Show countdown for user feedback
+            for remaining in range(self.config.grace_period, 0, -5):
+                alive_count = sum(1 for proc in terminated_processes if proc.is_running())
+                if alive_count == 0:
+                    self.logger.info("All T-Rex processes have shut down gracefully!")
+                    break
+                self.logger.info(f"Still waiting... {alive_count} process(es) running, {remaining} seconds remaining")
+                time.sleep(5)
+            
+            _, alive = psutil.wait_procs(terminated_processes, timeout=0)  # Just check status now
+        else:
+            self.logger.info("No processes needed termination")
+            alive = []
         
         # Force kill any remaining processes
         if alive:
@@ -265,6 +305,10 @@ def main():
                        help="Temperature threshold in Celsius")
     parser.add_argument("--check-interval", "-i", type=int,
                        help="Check interval in seconds")
+    parser.add_argument("--test-mode", action="store_true",
+                       help="Test mode - shows what would happen without actually killing processes")
+    parser.add_argument("--dry-run", action="store_true",
+                       help="Dry run - check current temperature and processes without monitoring")
     
     args = parser.parse_args()
     
@@ -281,8 +325,48 @@ def main():
     if args.check_interval:
         config.check_interval = args.check_interval
     
-    # Create and run watchdog
+    # Create watchdog
     watchdog = GPUWatchdog(config)
+    
+    if args.dry_run:
+        print("=== DRY RUN MODE ===")
+        temp = watchdog.get_gpu_temperature()
+        if temp:
+            print(f"Current GPU Temperature: {temp}°C")
+            print(f"Threshold: {config.temp_threshold}°C")
+            if temp >= config.temp_threshold:
+                print("⚠️  Temperature EXCEEDS threshold!")
+                processes = watchdog.find_trex_processes()
+                if processes:
+                    print(f"Found {len(processes)} T-Rex process(es):")
+                    for proc in processes:
+                        try:
+                            print(f"  - PID {proc.pid}: {proc.name()}")
+                        except:
+                            print(f"  - PID {proc.pid}: <process info unavailable>")
+                else:
+                    print("No T-Rex processes found")
+            else:
+                print("✅ Temperature is within safe range")
+        else:
+            print("❌ Could not read GPU temperature")
+        return
+    
+    if args.test_mode:
+        print("=== TEST MODE - No processes will actually be killed ===")
+        # Modify config for testing
+        original_method = watchdog.graceful_shutdown_trex
+        def test_shutdown(processes):
+            print(f"TEST: Would shutdown {len(processes)} processes with {config.grace_period}s grace period")
+            for proc in processes:
+                try:
+                    print(f"TEST: Would send shutdown signal to PID {proc.pid}: {proc.name()}")
+                except:
+                    print(f"TEST: Would send shutdown signal to PID {proc.pid}")
+            return True
+        watchdog.graceful_shutdown_trex = test_shutdown
+    
+    # Run watchdog
     watchdog.run()
 
 

@@ -1,9 +1,16 @@
 # WatchDAWG - GPU Temperature Watchdog for T-Rex Mining
 
-A Python program that monitors GPU temperature and gracefully shuts down T-Rex mining software when the temperature exceeds a configurable threshold.
+Monitors GPU temperature and gracefully shuts down T-Rex mining software when the temperature exceeds a configurable threshold.
 
-## 🚀 Quick Start
+## Quick Start
 
+**For Beginners (Recommended):**
+```cmd
+# Download the project and double-click:
+start.bat
+```
+
+**For Advanced Users:**
 ```bash
 git clone https://github.com/cgninety/watchdawg.git
 cd watchdawg
@@ -29,7 +36,28 @@ setup.bat          # Windows users
 
 ## Installation
 
-### Method 1: Clone from GitHub (Recommended)
+
+
+**The easiest way for new users:**
+
+1. **Download the project:**
+   - Go to https://github.com/cgninety/watchdawg
+   - Click "Code" > "Download ZIP" 
+   - Extract the ZIP file to your desired location
+
+2. **One-click setup and run:**
+   - Double-click `start.bat`
+   - Follow the automatic setup process
+   - Use the menu to start monitoring
+
+The `start.bat` file provides a complete graphical interface that:
+- Automatically installs all dependencies
+- Creates configuration files
+- Provides easy menu-driven operation
+- Includes test modes for safe experimentation
+- Shows current GPU temperature and settings
+
+### Method 2: Clone from GitHub (Advanced Users)
 
 1. **Clone the repository:**
 ```bash
@@ -61,7 +89,7 @@ pip install -r requirements.txt
 python gpu_watchdog.py --create-config
 ```
 
-### Method 2: Download Individual Files
+### Method 3: Download Individual Files
 
 If you prefer not to use Git:
 
@@ -69,6 +97,7 @@ If you prefer not to use Git:
    - `gpu_watchdog.py`
    - `requirements.txt` 
    - `gpu_watchdog_config.json` (optional, will be created automatically)
+   - `start.bat` (recommended for beginners)
 
 2. Install required Python packages:
 ```bash
@@ -104,16 +133,26 @@ The program uses a JSON configuration file (`gpu_watchdog_config.json`) with the
 
 ## Usage
 
-### Quick Start (Windows)
+### Beginner Method (Recommended)
 
-After installation, simply run:
-```cmd
-run_watchdog.bat
-```
+**Simply double-click `start.bat` and use the menu:**
 
-### Basic Usage
+- **Option 1**: Start WatchDAWG (full monitoring)
+- **Option 2**: Test Mode (safe testing without killing processes)  
+- **Option 3**: Check current GPU temperature
+- **Option 4**: Edit temperature threshold (70-90°C)
+- **Option 5**: View log file
+- **Option 6**: Exit
 
-Run the watchdog with default settings:
+The start.bat provides:
+- Automatic setup on first run
+- Current temperature display
+- Easy configuration changes
+- Built-in help and guidance
+
+### Advanced Command Line Usage
+
+After installation, run the watchdog with default settings:
 ```bash
 python gpu_watchdog.py
 ```
@@ -129,6 +168,12 @@ python gpu_watchdog.py --temp-threshold 80
 
 # Override check interval
 python gpu_watchdog.py --check-interval 15
+
+# Test mode (safe testing)
+python gpu_watchdog.py --test-mode --temp-threshold 70
+
+# Dry run (check status without monitoring)
+python gpu_watchdog.py --dry-run
 
 # Create default configuration file
 python gpu_watchdog.py --create-config
@@ -149,8 +194,9 @@ nssm install GPUWatchdog "C:\path\to\python.exe" "C:\path\to\gpu_watchdog.py"
 1. **Temperature Monitoring**: The program continuously monitors GPU temperature using `nvidia-smi`
 2. **Process Detection**: When temperature exceeds threshold, it searches for T-Rex mining processes
 3. **Graceful Shutdown**: 
-   - Sends `CTRL_C_EVENT` on Windows or `SIGTERM` on Linux
-   - Waits for the configured grace period for processes to shut down cleanly
+   - Sends CTRL+C signal on Windows or SIGINT on Linux for graceful shutdown
+   - Waits 2 seconds for immediate response
+   - Shows countdown during the configured grace period (default: 15 seconds)
    - Force kills any remaining processes if they don't respond
 4. **Logging**: All actions are logged to both console and `gpu_watchdog.log` file
 
@@ -166,6 +212,7 @@ The watchdog detects T-Rex processes by:
 - **Error Handling**: Continues monitoring even if individual checks fail
 - **Logging**: Comprehensive logging for troubleshooting
 - **Configuration Validation**: Validates settings on startup
+- **Test Modes**: Safe testing without affecting running processes
 
 ## Troubleshooting
 
@@ -174,6 +221,8 @@ The watchdog detects T-Rex processes by:
 1. **"nvidia-smi not found"**: Ensure NVIDIA drivers are installed and nvidia-smi is in PATH
 2. **Permission errors**: Run as administrator on Windows or with appropriate permissions on Linux
 3. **Process not detected**: Check the `trex_process_names` configuration to ensure it matches your T-Rex executable name
+4. **Python not found**: Make sure Python 3.7+ is installed and in your system PATH
+5. **Virtual environment issues**: Delete the `.venv` folder and run `start.bat` again
 
 ### Logs
 
@@ -182,6 +231,10 @@ Check the `gpu_watchdog.log` file for detailed information about:
 - Process detection
 - Shutdown attempts
 - Errors and warnings
+
+**View logs easily:**
+- Use Option 5 in `start.bat` menu
+- Or manually: `type gpu_watchdog.log` (Windows) or `cat gpu_watchdog.log` (Linux)
 
 ## License
 
