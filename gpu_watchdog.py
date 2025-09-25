@@ -31,8 +31,27 @@ class GPUWatchdog:
     
     def __init__(self, config: Config):
         self.config = config
+        self._validate_config()
         self.logger = self._setup_logging()
         self.running = True
+    
+    def _validate_config(self) -> None:
+        """Validate configuration parameters"""
+        if not 0 < self.config.temp_threshold < 200:
+            raise ValueError(f"Temperature threshold must be between 0 and 200°C, got {self.config.temp_threshold}")
+        
+        if not 1 <= self.config.check_interval <= 300:
+            raise ValueError(f"Check interval must be between 1 and 300 seconds, got {self.config.check_interval}")
+        
+        if not 5 <= self.config.grace_period <= 300:
+            raise ValueError(f"Grace period must be between 5 and 300 seconds, got {self.config.grace_period}")
+        
+        if not self.config.trex_process_names:
+            raise ValueError("trex_process_names cannot be empty")
+        
+        valid_log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+        if self.config.log_level.upper() not in valid_log_levels:
+            raise ValueError(f"Invalid log level: {self.config.log_level}. Must be one of {valid_log_levels}")
         
     def _setup_logging(self) -> logging.Logger:
         """Setup logging configuration"""
@@ -74,8 +93,17 @@ class GPUWatchdog:
                 temps: List[float] = []
                 for temp_str in result.stdout.strip().split('\n'):
                     temp_str = temp_str.strip()
-                    if temp_str and temp_str.replace('.', '').isdigit():
-                        temps.append(float(temp_str))
+                    if temp_str:
+                        try:
+                            temp_value = float(temp_str)
+                            # Sanity check: GPU temps should be reasonable (0-150°C)
+                            if 0 <= temp_value <= 150:
+                                temps.append(temp_value)
+                            else:
+                                self.logger.warning(f"Unusual GPU temperature reading: {temp_value}°C")
+                        except ValueError:
+                            self.logger.debug(f"Could not parse temperature value: '{temp_str}'")
+                            continue
                 
                 if temps:
                     max_temp = max(temps)
@@ -190,15 +218,23 @@ class GPUWatchdog:
             self.logger.info(f"Waiting {self.config.grace_period} seconds for {len(terminated_processes)} process(es) to shut down gracefully...")
             
             # Show countdown for user feedback
-            for remaining in range(self.config.grace_period, 0, -5):
+            elapsed = 0
+            check_interval = min(5, self.config.grace_period)  # Check every 5 seconds or less
+            
+            while elapsed < self.config.grace_period:
+                time.sleep(check_interval)
+                elapsed += check_interval
+                
                 alive_count = sum(1 for proc in terminated_processes if proc.is_running())
                 if alive_count == 0:
                     self.logger.info("All T-Rex processes have shut down gracefully!")
                     break
-                self.logger.info(f"Still waiting... {alive_count} process(es) running, {remaining} seconds remaining")
-                time.sleep(5)
+                
+                remaining = max(0, self.config.grace_period - elapsed)
+                if remaining > 0:
+                    self.logger.info(f"Still waiting... {alive_count} process(es) running, {remaining} seconds remaining")
             
-            _, alive = psutil.wait_procs(terminated_processes, timeout=0)  # Just check status now
+            _, alive = psutil.wait_procs(terminated_processes, timeout=0)  # Just check final status
         else:
             self.logger.info("No processes needed termination")
             alive = []
@@ -278,9 +314,10 @@ def load_config(config_file: str = "gpu_watchdog_config.json") -> Config:
     return Config()
 
 
-def save_default_config(config_file: str = "gpu_watchdog_config.json"):
+def save_default_config(config_file: str = "gpu_watchdog_config.json") -> None:
     """Save default configuration to JSON file"""
-    default_config = {
+    from typing import Any, Dict
+    default_config: Dict[str, Any] = {
         "temp_threshold": 85.0,
         "check_interval": 10,
         "grace_period": 30,
@@ -359,8 +396,7 @@ def main():
     if args.test_mode:
         print("=== TEST MODE - No processes will actually be killed ===")
         # Modify config for testing
-        original_method = watchdog.graceful_shutdown_trex
-        def test_shutdown(processes):
+        def test_shutdown(processes: List[psutil.Process]) -> bool:
             print(f"TEST: Would shutdown {len(processes)} processes with {config.grace_period}s grace period")
             for proc in processes:
                 try:
